@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Commit changes
-        uses: step-security/terraform-composite-actions/commit@main
+        uses: step-security/terraform-composite-actions/commit@v1
         with:
           git-branch: ${{ github.event.pull_request.head.ref }}
           github-repository: ${{github.event.pull_request.head.repo.full_name}}
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Sign AWS Lambda artifact
-        uses: step-security/terraform-composite-actions/directories@main
+        uses: step-security/terraform-composite-actions/directories@v1
         id: search
       - name: Outputs
         run: echo "${{ steps.search.outputs.directories }}"
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Sign AWS Lambda artifact
-        uses: step-security/terraform-composite-actions/pre-commit@main
+        uses: step-security/terraform-composite-actions/pre-commit@v1
         with:
           # Configure default software
           terraform-version: 1.2.0

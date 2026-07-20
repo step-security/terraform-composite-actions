@@ -7,7 +7,7 @@
 
 ## Usage
 
-The `clowdhaus/terraform-composite-actions/commit` action will commit any changes back to your `git-branch`. When used in conjunction with `clowdhaus/terraform-composite-actions/pre-commit`, this action will ensure that pull-requests are well formatted and the automatically generated documentation is updated.
+The `step-security/terraform-composite-actions/commit` action will commit any changes back to your `git-branch`. When used in conjunction with `step-security/terraform-composite-actions/pre-commit`, this action will ensure that pull-requests are well formatted and the automatically generated documentation is updated.
 
 ### GitHub Token Permissions
 
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Commit changes
-        uses: clowdhaus/terraform-composite-actions/commit@main
+        uses: step-security/terraform-composite-actions/commit@v1
         with:
           git-branch: ${{ github.event.pull_request.head.ref }}
           github-repository: ${{github.event.pull_request.head.repo.full_name}}

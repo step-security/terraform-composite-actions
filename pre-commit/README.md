@@ -7,7 +7,7 @@
 
 ## Usage
 
-The `clowdhaus/terraform-composite-actions/pre-commit` action will install the following tools which are intended to support the pre-commit hooks used within Terraform modules:
+The `step-security/terraform-composite-actions/pre-commit` action will install the following tools which are intended to support the pre-commit hooks used within Terraform modules:
 
 - [terraform](https://github.com/hashicorp/terraform) using provided `terraform-version` input
 - [pre-commit](https://github.com/pre-commit/pre-commit)
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Sign AWS Lambda artifact
-        uses: clowdhaus/terraform-composite-actions/pre-commit@main
+        uses: step-security/terraform-composite-actions/pre-commit@v1
         with:
           terraform-version: 1.2.0
           terraform-docs-version: v16.0.0
