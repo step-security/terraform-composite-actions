@@ -61,9 +61,17 @@ runs:
 
     - name: Commit files
       shell: bash
+      env:
+        GIT_BRANCH: ${{ inputs.git-branch }}
+        GITHUB_TOKEN_INPUT: ${{ inputs.github-token }}
+        GITHUB_REPOSITORY_INPUT: ${{ inputs.github-repository }}
       run: |
+        echo "::add-mask::${GITHUB_TOKEN_INPUT}"
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m 'chore: auto format and update docs' -a || echo 'Nothing to update'
-        remote_repo="https://${GITHUB_ACTOR}:${{ inputs.github-token }}@github.com/${{ inputs.github-repository }}.git"
-        git push "${remote_repo}" HEAD:${{ inputs.git-branch }} || true
+        encoded_token=$(printf '%s' "x-access-token:${GITHUB_TOKEN_INPUT}" | base64 | tr -d '\n')
+        git config --local http.extraheader "AUTHORIZATION: basic ${encoded_token}"
+        remote_repo="https://github.com/${GITHUB_REPOSITORY_INPUT}.git"
+        git push "${remote_repo}" HEAD:"${GIT_BRANCH}" || true
+        git config --local --unset http.extraheader

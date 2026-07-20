@@ -246,9 +246,11 @@ runs:
 
     - name: Execute pre-commit
       shell: bash
+      env:
+        PRECOMMIT_ARGS: ${{ inputs.args }}
       run: |
         source ~/.venv/bin/activate
-        pre-commit run ${{ inputs.args }}
+        pre-commit run ${PRECOMMIT_ARGS}
 
     - name: Cleanup venv
       shell: bash
