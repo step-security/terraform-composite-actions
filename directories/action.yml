@@ -1,0 +1,101 @@
+name: directories
+description: Collects list of Terraform directories
+outputs:
+  directories:
+    description: Array of directories that contain a `versions.tf` file
+    value: ${{ steps.search.outputs.directories }}
+
+runs:
+  using: composite
+  steps:
+    - name: Subscription check
+      env:
+        REPO_PRIVATE: ${{ github.event.repository.private }}
+      run: |
+        # validate subscription status
+        UPSTREAM="clowdhaus/terraform-composite-actions"
+        ACTION_REPO="${GITHUB_ACTION_REPOSITORY:-}"
+        DOCS_URL="https://docs.stepsecurity.io/actions/stepsecurity-maintained-actions"
+
+        echo ""
+        echo -e "\033[1;36mStepSecurity Maintained Action\033[0m"
+        echo "Secure drop-in replacement for $UPSTREAM"
+        if [ "$REPO_PRIVATE" = "false" ]; then
+          echo -e "\033[32m✓ Free for public repositories\033[0m"
+        fi
+        echo -e "\033[36mLearn more:\033[0m $DOCS_URL"
+        echo ""
+
+        if [ "$REPO_PRIVATE" != "false" ]; then
+          SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
+
+          if [ "$SERVER_URL" != "https://github.com" ]; then
+            BODY=$(printf '{"action":"%s","ghes_server":"%s"}' "$ACTION_REPO" "$SERVER_URL")
+          else
+            BODY=$(printf '{"action":"%s"}' "$ACTION_REPO")
+          fi
+
+          API_URL="https://agent.api.stepsecurity.io/v1/github/$GITHUB_REPOSITORY/actions/maintained-actions-subscription"
+
+          RESPONSE=$(curl --max-time 3 -s -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$BODY" \
+            "$API_URL" -o /dev/null) && CURL_EXIT_CODE=0 || CURL_EXIT_CODE=$?
+
+          if [ $CURL_EXIT_CODE -ne 0 ]; then
+            echo "Timeout or API not reachable. Continuing to next step."
+          elif [ "$RESPONSE" = "403" ]; then
+            echo -e "::error::\033[1;31mThis action requires a StepSecurity subscription for private repositories.\033[0m"
+            echo -e "::error::\033[31mLearn how to enable a subscription: $DOCS_URL\033[0m"
+            exit 1
+          fi
+        fi
+      shell: bash
+
+    - name: Get Terraform directories for evaluation
+      shell: bash
+      id: search
+      run: |
+        cat > directories.py <<EOL
+        import json
+        import mmap
+        import os
+        import re
+        import glob
+        from pathlib import Path
+
+
+        def get_directories():
+            """
+            Return all Terraform (*.tf) files that contain the 'required_version'
+                string, but does not contain 'wrapper' in the path.
+            """
+
+            terraform_files = glob.glob('./**/*.tf', recursive=True)
+            directories = []
+
+            for file in terraform_files:
+                p = Path(file)
+                if p.is_dir():
+                  continue
+                file_size = os.stat(file)
+
+                if file_size.st_size > 0:
+                    with open(file, 'rb', 0) as rfile:
+                        contents = mmap.mmap(rfile.fileno(), 0, access=mmap.ACCESS_READ)
+                        if contents.find(b'required_version') != -1 and 'wrapper' not in file:
+                            formatted = "/".join(file.split('/')[:-1])
+                            directories.append(formatted)
+
+            return json.dumps([x for x in directories if not re.match(r'^.+/_', x)])
+
+
+        if __name__ == '__main__':
+            print(get_directories())
+        EOL
+
+        DIRS=$(python ./directories.py)
+        echo $DIRS
+        rm directories.py
+        echo "directories=$DIRS" >> $GITHUB_OUTPUT
